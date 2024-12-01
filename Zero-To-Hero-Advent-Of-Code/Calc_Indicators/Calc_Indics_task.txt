@@ -1,0 +1,2 @@
+This task is to use the last code you wrote to get data and then calculate indicators from the data.
+Add a moving average cross strategy with signals, RSI, and bolligner bands

@@ -1,0 +1,2 @@
+The task is to get data by either reading from a csv, if it doesn't exist handle the error and write the csv later, or with an api connection
+Plot the candlestick chart with Plotly

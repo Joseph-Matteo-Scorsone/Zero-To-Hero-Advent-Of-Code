@@ -1,0 +1,3 @@
+This task is to get data with the second episode's code we wrote and calculate different kinds of volatility on it.
+Use standard deviation of log returns, ewma, and annualize the standard deviation of log returns.
+Use subplots to plot every volatility

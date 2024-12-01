@@ -1,0 +1,3 @@
+Get stock data, then using the Black Scholes Model calculate the rolling price of at the money, 30 day day till expiration, call and put option
+Use 0.03 for the risk free rate, and the annualized volatility we calculated last task for volatility.
+Use subplots to plot the price and premiumns.

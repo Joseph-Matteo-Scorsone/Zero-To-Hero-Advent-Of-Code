@@ -1,0 +1,2 @@
+Use the same code from the last task, but modify the pricing model to use the Binomial Pricing model.
+Plot everything the same way.

@@ -1,0 +1,4 @@
+For this task create an object, a cache, that will store data with key value pairs asynchronously.
+Add a task that will remove the data after a specified amount of time for future use cases.
+Modify the get data function to try to access the cache first, if it cannot, then get the data and cache it.
+Print the data with how long each task took; api connection, read csv, or cache hit

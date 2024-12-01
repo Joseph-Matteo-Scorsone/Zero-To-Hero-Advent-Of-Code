@@ -1,0 +1,2 @@
+Add to the previous task by pricing a chain or calls and puts, can move the strikes by 1 for simplicity, also calculate the Greeks.
+Print out each contract's attributes.

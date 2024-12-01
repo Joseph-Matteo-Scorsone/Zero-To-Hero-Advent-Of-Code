@@ -1,0 +1,2 @@
+Use the previous option pricing code, but modify the pricing model to use a monte carlo simulation instead.
+Plot everything the same way.
