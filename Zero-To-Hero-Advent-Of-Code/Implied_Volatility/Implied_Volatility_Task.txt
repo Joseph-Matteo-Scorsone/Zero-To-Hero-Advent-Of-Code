@@ -1,2 +1,3 @@
-Add to the previous task by pricing a chain or calls and puts, can move the strikes by 1 for simplicity, also calculate the Greeks.
+Add to the previous task by pricing a chain of calls and puts, can move the strikes by 1 for simplicity. 
+Also calculate the Greeks and estimate implied volatility.
 Print out each contract's attributes.
