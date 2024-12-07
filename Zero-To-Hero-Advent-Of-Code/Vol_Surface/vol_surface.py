@@ -38,7 +38,7 @@ def find_implied_volatility(market_price, S0, K, r, T, is_call_option):
     return sigma
 
 def bs_option_chain(S0, K, r, sigma, T, option_type="call"):
-    T /= 252
+    T /= 365
     chain = []
     for i in range(-5, 5):
         strike = K + i
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     stock_data = get_stock_data(tickers, start=start_date, end=end_date)
     
     for ticker, data in stock_data.items():
-        S0, K, r, sigma, T = data.iloc[-1]["Close"], data.iloc[-1]["Close"], 0.05, 0.2, 30
+        S0, K, r, sigma, T = np.floor(data.iloc[-1]["Close"]), np.floor(data.iloc[-1]["Close"]), 0.05, 0.2, 30
         call_chain = bs_option_chain(S0, K, r, sigma, T, "call")
         put_chain = bs_option_chain(S0, K, r, sigma, T, "put")
         
