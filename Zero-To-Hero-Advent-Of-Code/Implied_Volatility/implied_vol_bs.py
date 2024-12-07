@@ -5,75 +5,57 @@ import random
 from scipy.stats import norm
 
 class Contract:
-    def __init__(self):
-        self.premium = 0
-        self.strike = 0
-        self.dte = 0
-        self.delta = 0
-        self.gamma = 0
-        self.theta = 0
-        self.vega = 0
-        self.rho = 0
-        self.implied_volatility = 0
-        self.intrinsic_value = 0
-        self.market_price = 0
+    def __init__(self, strike, premium, dte, delta, gamma, theta, vega, rho, implied_volatility, intrinsic_value, market_price):
+        self.strike = strike
+        self.premium = premium
+        self.dte = dte
+        self.delta = delta
+        self.gamma = gamma
+        self.theta = theta
+        self.vega = vega
+        self.rho = rho
+        self.implied_volatility = implied_volatility
+        self.intrinsic_value = intrinsic_value
+        self.market_price = market_price
 
-
-def black_scholes(S0, K, r, sigma, T, is_call_option):
-    T = T /252
-
-    d1 = (np.log(S0 / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+def black_scholes(S, K, T, r, sigma, option_type="call"):
+    d1 = (np.log(S/K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
     d2 = d1 - sigma * np.sqrt(T)
-    if is_call_option:
-        return S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
-    else:
-        return K * np.exp(-r * T) * norm.cdf(-d2) - S0 * norm.cdf(-d1)
+
+    return S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2) if option_type == "call" else  K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
 
 def find_implied_volatility(market_price, S0, K, r, T, is_call_option):
-    sigma = 0.2
-    tolerance = 1e-5
-    max_iterations = 100
+    sigma, tolerance, max_iterations = 0.2, 1e-5, 100
     for _ in range(max_iterations):
-        price = black_scholes(S0, K, r, sigma, T, is_call_option)
+        price = black_scholes(S0, K, T, r, sigma, is_call_option)
         d1 = (np.log(S0 / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
         vega = S0 * np.sqrt(T) * norm.pdf(d1)
-        price_difference = market_price - price
-        if abs(price_difference) < tolerance:
+        if abs(market_price - price) < tolerance:
             break
-        sigma += price_difference / vega
+        sigma += (market_price - price) / vega
     return sigma
 
-def bs_option_chain(S0, K, r, sigma, T, is_call_option):
-
+def bs_option_chain(S0, K, r, sigma, T, option_type="call"):
+    T /= 252
     chain = []
     for i in range(-5, 5):
-        con = Contract()
-        days_till_expiry = int(T * 365.2425)
-        con.dte = days_till_expiry
-        con.strike = K + i
-        d1 = (np.log(S0 / (K + i)) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+        strike = K + i
+        d1 = (np.log(S0 / strike) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
         d2 = d1 - sigma * np.sqrt(T)
+        premium = black_scholes(S0, strike, T, r, sigma, option_type)
 
-        if is_call_option:
-            con.premium = S0 * norm.cdf(d1) - (K + i) * np.exp(-r * T) * norm.cdf(d2)
-            con.delta = norm.cdf(d1)
-            con.intrinsic_value = max(S0 - (K + i), 0)
-        else:
-            con.premium = (K + i) * np.exp(-r * T) * norm.cdf(-d2) - S0 * norm.cdf(-d1)
-            con.delta = norm.cdf(d1) - 1
-            con.intrinsic_value = max((K + i) - S0, 0)
+        intrinsic_value = max(S0 - strike, 0) if option_type == "call" else max(strike - S0, 0)
+        delta = norm.cdf(d1) if option_type == "call" else norm.cdf(d1) - 1
 
-        con.gamma = norm.pdf(d1) / (S0 * sigma * np.sqrt(T))
-        con.theta = (-(S0 * norm.pdf(d1) * sigma) / (2 * np.sqrt(T))) - (r * (K + i) * np.exp(-r * T) * norm.cdf(d2))
-        con.vega = S0 * norm.pdf(d1) * np.sqrt(T)
-        con.rho = (K + i) * T * np.exp(-r * T) * norm.cdf(d2)
+        gamma = norm.pdf(d1) / (S0 * sigma * np.sqrt(T))
+        theta = -(S0 * norm.pdf(d1) * sigma) / (2 * np.sqrt(T)) - (r * strike * np.exp(-r * T) * norm.cdf(d2))
+        vega = S0 * norm.pdf(d1) * np.sqrt(T)
+        rho = strike * T * np.exp(-r * T) * norm.cdf(d2)
 
         market_noise = random.gauss(0, 0.5)
-        con.market_price = con.premium + market_noise
+        implied_volatility = find_implied_volatility(premium + market_noise, S0, strike, r, T, option_type)
 
-        con.implied_volatility = find_implied_volatility(con.market_price, S0, K + i, r, T, is_call_option)
-
-        chain.append(con)
+        chain.append(Contract(strike, premium, int(T * 365.2425), delta, gamma, theta, vega, rho, implied_volatility, intrinsic_value, premium + market_noise))
     return chain
 
 def get_stock_data(tickers, start, end):
@@ -81,48 +63,28 @@ def get_stock_data(tickers, start, end):
     for ticker in tickers:
         try:
             df = pd.read_csv(f'../CSVs/{ticker}_returns.csv', index_col=0, parse_dates=True)
-            
             data[ticker] = df
 
         except Exception as e:
             print(f"Downloading data for {ticker} due to error: {e}")
             df = yf.download(ticker, start=start, end=end)
-            
             data[ticker] = df
             
             df.to_csv(f'../CSVs/{ticker}_returns.csv')
 
     return data
 
-
 if __name__ == "__main__":
-    tickers = ['AAPL', 'MSFT', 'GOOGL']
-    start_date = '2023-01-01'
-    end_date = '2023-12-31'
-    
+    tickers = ['AAPL']
+    start_date, end_date = '2023-01-01', '2023-12-31'
     stock_data = get_stock_data(tickers, start=start_date, end=end_date)
-
+    
     for ticker, data in stock_data.items():
+        S0, K, r, sigma, T = data.iloc[-1]["Close"], data.iloc[-1]["Close"], 0.05, 0.2, 30
+        call_chain = bs_option_chain(S0, K, r, sigma, T, "call")
+        put_chain = bs_option_chain(S0, K, r, sigma, T, "put")
         
-        S0 = data.iloc[-1]["Close"]
-        K = S0
-        r = 0.05
-        sigma = 0.2
-        T = 30
-
-        call_chain = bs_option_chain(S0, K, r, sigma, T, True)
-        put_chain = bs_option_chain(S0, K, r, sigma, T, False)
-
-        for con in call_chain:
-            print(f"Strike: {con.strike}, European Call Option Price: {con.premium}, Market Price: {con.market_price}, "
-                f"dte: {con.dte}, delta: {con.delta}, gamma: {con.gamma}, theta: {con.theta}, "
-                f"vega: {con.vega}, rho: {con.rho}, implied volatility: {con.implied_volatility}, "
-                f"intrinsic value: {con.intrinsic_value}")
-
-        print()
-
-        for con in put_chain:
-            print(f"Strike: {con.strike}, European Put Option Price: {con.premium}, Market Price: {con.market_price}, "
-                f"dte: {con.dte}, delta: {con.delta}, gamma: {con.gamma}, theta: {con.theta}, "
-                f"vega: {con.vega}, rho: {con.rho}, implied volatility: {con.implied_volatility}, "
-                f"intrinsic value: {con.intrinsic_value}")
+        for con in call_chain + put_chain:
+            print(f"Strike: {con.strike}, Option Price: {con.premium}, Market Price: {con.market_price}, dte: {con.dte}, "
+                  f"delta: {con.delta}, gamma: {con.gamma}, theta: {con.theta}, vega: {con.vega}, rho: {con.rho}, "
+                  f"implied volatility: {con.implied_volatility}, intrinsic value: {con.intrinsic_value}")
