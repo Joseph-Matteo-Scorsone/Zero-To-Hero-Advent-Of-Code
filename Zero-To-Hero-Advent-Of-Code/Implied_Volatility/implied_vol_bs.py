@@ -36,7 +36,8 @@ def find_implied_volatility(market_price, S0, K, r, T, is_call_option):
     return sigma
 
 def bs_option_chain(S0, K, r, sigma, T, option_type="call"):
-    T /= 252
+    T /= 365
+    
     chain = []
     for i in range(-5, 5):
         strike = K + i
@@ -55,7 +56,7 @@ def bs_option_chain(S0, K, r, sigma, T, option_type="call"):
         market_noise = random.gauss(0, 0.5)
         implied_volatility = find_implied_volatility(premium + market_noise, S0, strike, r, T, option_type)
 
-        chain.append(Contract(strike, premium, int(T * 365.2425), delta, gamma, theta, vega, rho, implied_volatility, intrinsic_value, premium + market_noise))
+        chain.append(Contract(strike, premium, int(T * 365), delta, gamma, theta, vega, rho, implied_volatility, intrinsic_value, premium + market_noise))
     return chain
 
 def get_stock_data(tickers, start, end):
@@ -80,7 +81,8 @@ if __name__ == "__main__":
     stock_data = get_stock_data(tickers, start=start_date, end=end_date)
     
     for ticker, data in stock_data.items():
-        S0, K, r, sigma, T = data.iloc[-1]["Close"], data.iloc[-1]["Close"], 0.05, 0.2, 30
+        S0, K, r, sigma, T = np.floor(data.iloc[-1]["Close"]), np.floor(data.iloc[-1]["Close"]), 0.05, 0.2, 30
+
         call_chain = bs_option_chain(S0, K, r, sigma, T, "call")
         put_chain = bs_option_chain(S0, K, r, sigma, T, "put")
         
@@ -88,3 +90,4 @@ if __name__ == "__main__":
             print(f"Strike: {con.strike}, Option Price: {con.premium}, Market Price: {con.market_price}, dte: {con.dte}, "
                   f"delta: {con.delta}, gamma: {con.gamma}, theta: {con.theta}, vega: {con.vega}, rho: {con.rho}, "
                   f"implied volatility: {con.implied_volatility}, intrinsic value: {con.intrinsic_value}")
+            print("\n")
