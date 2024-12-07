@@ -57,7 +57,7 @@ def bs_option_chain(S0, K, r, sigma, T, option_type="call"):
         market_noise = random.gauss(0, 0.5)
         implied_volatility = find_implied_volatility(premium + market_noise, S0, strike, r, T, option_type)
 
-        chain.append(Contract(strike, premium, int(T * 365.2425), delta, gamma, theta, vega, rho, implied_volatility, intrinsic_value, premium + market_noise))
+        chain.append(Contract(strike, premium, int(T * 365), delta, gamma, theta, vega, rho, implied_volatility, intrinsic_value, premium + market_noise))
     return chain
 
 def plot_volatility_surface(chain, side, ticker):
