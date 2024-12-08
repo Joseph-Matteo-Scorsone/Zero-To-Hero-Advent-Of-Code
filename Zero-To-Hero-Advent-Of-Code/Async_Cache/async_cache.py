@@ -20,6 +20,7 @@ class Async_Cache():
                 return value[0]
             else:
                 del self.cache[key]
+
         return None
 
     async def clean_up(self):
@@ -27,7 +28,7 @@ class Async_Cache():
             await asyncio.sleep(self.interval)
             current_time = time.time()
             keys_to_delete = [key for key, (_, timestamp) in self.cache.items()
-                              if current_time - timestamp >= self.seconds_til_expire]
+                                if current_time - timestamp >= self.seconds_til_expire]
             for key in keys_to_delete:
                 del self.cache[key]
 
@@ -39,10 +40,9 @@ async def get_stock_data(tickers, start, end, cache=None):
         cached_data = await cache.get_value_from_key(ticker)
         if cached_data is not None:
 
-            print(f"Cache hit for ticker: {ticker}")
+            print(f"Cache hit on {ticker}")
             time_taken = time.time() - start_time
-            print(f"Time taken for cache hit for {ticker}: {time_taken:.4f} seconds")
-
+            print(f"Time taken for {ticker} cache hit: {time_taken:.4f} seconds")
             data[ticker] = cached_data
             continue
 
@@ -63,7 +63,7 @@ async def get_stock_data(tickers, start, end, cache=None):
             start_time = time.time()
             df = yf.download(ticker, start=start, end=end)
             if cache:
-                cache.set_key_value(ticker, df)
+                await cache.set_key_value(ticker, df)
             df.to_csv(f'../CSVs/{ticker}_returns.csv')
 
             time_taken = time.time() - start_time
@@ -79,9 +79,9 @@ async def main():
 
     start_date = '2015-01-01'
     end_date = '2024-1-1'
-    tickers = ["MMM", "AAPL", "MSFT", "AAPL"]
+    tickers = ["CRWD", "AAPL", "MSFT", "AAPL", "CRWD"]
 
     stock_data = await get_stock_data(tickers, start=start_date, end=end_date, cache=cache)
-    #print(stock_data)
+    print(stock_data)
 
 asyncio.run(main())
