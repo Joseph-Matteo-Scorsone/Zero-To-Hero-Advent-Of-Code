@@ -4,7 +4,6 @@ import numpy as np
 import random
 from scipy.stats import norm
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 class Contract:
     def __init__(self, strike, premium, dte, delta, gamma, theta, vega, rho, implied_volatility, intrinsic_value, market_price):
@@ -65,7 +64,7 @@ def plot_volatility_surface(chain, side, ticker):
     Z = np.array([c.implied_volatility for c in chain]).reshape(len(set([c.dte for c in chain])), len(set([c.strike for c in chain])))
 
     fig = plt.figure(figsize=(12, 8))
-    ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
     ax.plot_surface(X, Y, Z, cmap="viridis", edgecolor='k', alpha=0.8)
     ax.set_title(f"{ticker} {side} Implied Volatility Surface", fontsize=16)
     ax.set_xlabel("Strike Price", fontsize=12)
