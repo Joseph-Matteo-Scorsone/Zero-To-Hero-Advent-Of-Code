@@ -76,14 +76,12 @@ async def get_stock_data(tickers, start, end, cache=None):
 
 async def main():
     cache = Async_Cache()
-    asyncio.create_task(cache.clean_up())
 
     start_date = '2015-01-01'
     end_date = '2024-1-1'
-    tickers = ["AAPL", "MSFT", "AAPL"]
+    tickers = ["MMM", "AAPL", "MSFT", "AAPL"]
 
     stock_data = await get_stock_data(tickers, start=start_date, end=end_date, cache=cache)
-    print(stock_data)
+    #print(stock_data)
 
-# delete AAPL csv
 asyncio.run(main())
