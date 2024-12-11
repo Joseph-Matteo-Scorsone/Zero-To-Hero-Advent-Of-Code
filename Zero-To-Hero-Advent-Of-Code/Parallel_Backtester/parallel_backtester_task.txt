@@ -1,0 +1,2 @@
+Implement functions to back test a simple moving average cross strategy in parallel with different parameters.
+Save back test results as CSVs, and get each dataframe back to plot them.
