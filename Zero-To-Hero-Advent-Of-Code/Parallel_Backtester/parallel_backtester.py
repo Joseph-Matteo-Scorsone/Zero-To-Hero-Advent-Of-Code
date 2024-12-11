@@ -75,28 +75,48 @@ def add_moving_average_strategy(data, short_window=20, long_window=50):
 
     return data
 
-def simulate_backtest(data, initial_balance=10000, risk=0.01):
+def simulate_backtest(data, initial_balance=10000, risk=0.01, transaction_cost=0.001):
     balance = float(initial_balance)
+    position_size = 0  # Shares held
     position = 0  # 1 for long, -1 for short, 0 for no position
+    entry_price = 0
 
     data = data.copy()
     data["Balance"] = balance
 
     for i in range(1, len(data)):
-        if data.iloc[i - 1]["Signal"] == 1:  # Buy signal
+        signal = data.iloc[i - 1]["Signal"]
+
+        if signal == 1 and position <= 0:  # Buy signal
+            # Close short position if open
+            if position == -1:
+                balance += position_size * (entry_price - data.iloc[i]["Close"]) * (1 - transaction_cost)
+                position_size = 0
+            # Open long position
             position = 1
-        elif data.iloc[i - 1]["Signal"] == -1:  # Sell signal
+            position_size = (risk * balance) / data.iloc[i]["Close"]
+            entry_price = data.iloc[i]["Close"]
+
+        elif signal == -1 and position >= 0:  # Sell signal
+            # Close long position if open
+            if position == 1:
+                balance += position_size * (data.iloc[i]["Close"] - entry_price) * (1 - transaction_cost)
+                position_size = 0
+            # Open short position
             position = -1
-        
-        # Update balance based on position and price change
-        if position != 0:
-            price_change = (data.iloc[i]["Close"] - data.iloc[i - 1]["Close"]) * position
-            balance += price_change * risk * balance
+            position_size = (risk * balance) / data.iloc[i]["Close"]
+            entry_price = data.iloc[i]["Close"]
+
+        # Update balance for unrealized P&L
+        if position == 1:  # Long
+            balance += position_size * (data.iloc[i]["Close"] - data.iloc[i - 1]["Close"])
+        elif position == -1:  # Short
+            balance += position_size * (data.iloc[i - 1]["Close"] - data.iloc[i]["Close"])
 
         data.loc[data.index[i], "Balance"] = balance
 
-    data = data.dropna()
     return data
+
 
 def plot_balance(data, backtest_id):
     fig = go.Figure()
