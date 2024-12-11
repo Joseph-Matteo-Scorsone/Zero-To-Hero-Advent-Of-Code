@@ -75,7 +75,7 @@ def add_moving_average_strategy(data, short_window=20, long_window=50):
 
     return data
 
-def simulate_backtest(data, initial_balance=10000, risk=0.01, transaction_cost=0.001):
+def simulate_backtest(data, initial_balance=10000, risk=0.10, transaction_cost=0.001, take_profit=0.05, stop_loss=0.02):
     balance = float(initial_balance)
     position_size = 0  # Shares held
     position = 0  # 1 for long, -1 for short, 0 for no position
@@ -87,21 +87,38 @@ def simulate_backtest(data, initial_balance=10000, risk=0.01, transaction_cost=0
     for i in range(1, len(data)):
         signal = data.iloc[i - 1]["Signal"]
 
-        if signal == 1 and position <= 0:  # Buy signal
-            # Close short position if open
-            if position == -1:
+        # Check for take-profit or stop-loss
+        if position != 0:
+            price_change = (data.iloc[i]["Close"] - entry_price) / entry_price
+
+            if position == 1 and (price_change >= take_profit or price_change <= -stop_loss):
+                # Close long position
+                balance += position_size * (data.iloc[i]["Close"] - entry_price) * (1 - transaction_cost)
+                position_size = 0
+                position = 0
+
+            elif position == -1 and (-price_change >= take_profit or -price_change <= -stop_loss):
+                # Close short position
                 balance += position_size * (entry_price - data.iloc[i]["Close"]) * (1 - transaction_cost)
                 position_size = 0
+                position = 0
+
+        # Open new positions based on signals
+        if signal == 1 and position <= 0:  # Buy signal
+            if position == -1:  # Close short position
+                balance += position_size * (entry_price - data.iloc[i]["Close"]) * (1 - transaction_cost)
+                position_size = 0
+
             # Open long position
             position = 1
             position_size = (risk * balance) / data.iloc[i]["Close"]
             entry_price = data.iloc[i]["Close"]
 
         elif signal == -1 and position >= 0:  # Sell signal
-            # Close long position if open
-            if position == 1:
+            if position == 1:  # Close long position
                 balance += position_size * (data.iloc[i]["Close"] - entry_price) * (1 - transaction_cost)
                 position_size = 0
+
             # Open short position
             position = -1
             position_size = (risk * balance) / data.iloc[i]["Close"]
@@ -118,27 +135,29 @@ def simulate_backtest(data, initial_balance=10000, risk=0.01, transaction_cost=0
     return data
 
 
-def plot_balance(data, backtest_id):
+
+def plot_balance(data, plot_title):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=data.index, y=data["Balance"], mode='lines', name='Balance'))
     fig.update_layout(
-        title=f"Balance Over Time for Backtest {backtest_id}",
+        title=f"Balance Over Time for Backtest {plot_title}",
         xaxis_title="Date",
         yaxis_title="Balance",
         template="plotly_dark"
     )
     fig.show()
 
-async def run_backtest(ticker, start, end, short_window, long_window, risk, cache):
+async def run_backtest(ticker, start, end, short_window, long_window, risk, take_profit, stop_loss, cache):
     # function to use as a task to backtest specific data
     backtest_id = f"{ticker}_{short_window}_{long_window}_{risk}"
     stock_data = await get_stock_data([ticker], start, end, cache)
     data = stock_data[ticker]
     data = add_moving_average_strategy(data, short_window, long_window)
-    results = simulate_backtest(data, risk=risk)
+    results = simulate_backtest(data, risk=risk, transaction_cost=0.001, take_profit=take_profit, stop_loss=stop_loss)
     
     results.to_csv(f"../backtests/backtest_{backtest_id}.csv")
-    plot_balance(results, backtest_id)
+    plot_title = f"{ticker} Short Window {short_window} Long Window {long_window} Risk {risk} Take Profit {take_profit} Stop loss {stop_loss}"
+    plot_balance(results, plot_title)
     return results
 
 async def main():
@@ -150,16 +169,18 @@ async def main():
 
     # Define varying parameters
     backtest_configs = [
-        {"ticker": ticker, "short_window": short, "long_window": long, "risk": risk}
+        {"ticker": ticker, "short_window": short, "long_window": long, "risk": risk, "take_profit":take_profit, "stop_loss":stop_loss}
         for ticker in tickers
         for short in [10, 20]
         for long in [50, 100]
         for risk in [0.01, 0.02]
+        for take_profit in [0.05, 0.10]
+        for stop_loss in [0.02, 0.05]
     ]
 
     # Run backtests in parallel
     tasks = [
-        run_backtest(config["ticker"], start_date, end_date, config["short_window"], config["long_window"], config["risk"], cache)
+        run_backtest(config["ticker"], start_date, end_date, config["short_window"], config["long_window"], config["risk"], config["take_profit"], config["stop_loss"], cache)
         for config in backtest_configs
     ]
 
