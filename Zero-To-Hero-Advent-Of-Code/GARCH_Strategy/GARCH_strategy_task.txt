@@ -1,0 +1,3 @@
+Implement a Mean reversion strategy using a GARCH(1, 1) model.
+Have a rolling window to use as a threshold of volatility.
+Plot results with GARCH and threshold.
