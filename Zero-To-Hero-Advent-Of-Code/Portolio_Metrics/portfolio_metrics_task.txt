@@ -1,0 +1,3 @@
+Modify the backtester to be able to have multiple tickers and strategies, as well as outright hold.
+For each back test provide portfolio metrics.
+Plot each back test with each window.
