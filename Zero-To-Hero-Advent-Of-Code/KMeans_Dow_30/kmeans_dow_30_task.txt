@@ -1,0 +1,3 @@
+Perform a KMeans anaylsis on the Dow 30 to group stocks by return and volatility.
+Use past code to calculate GARCH for volatility.
+Plot with Plotly.
