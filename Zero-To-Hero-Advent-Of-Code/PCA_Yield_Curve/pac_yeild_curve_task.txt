@@ -1,0 +1,9 @@
+Do a PCA analysis on the yield curve to determine which components drive the move the most.
+Also project onto the principle components.
+Plot with plotly.
+
+Links for csv's:
+https://fred.stlouisfed.org/series/DGS30 
+https://fred.stlouisfed.org/series/DGS10 
+https://fred.stlouisfed.org/series/DGS5 
+https://fred.stlouisfed.org/series/DGS2 
