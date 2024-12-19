@@ -1,0 +1,2 @@
+Implement an Isolation Forest from scratch to find outliers on stock data.
+Plot with plotly.
