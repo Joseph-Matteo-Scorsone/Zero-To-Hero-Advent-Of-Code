@@ -1,0 +1,3 @@
+Add to last episodes code by adding an option to stress test the portfolio.
+Do it by making the price action more volatile or having a crash, i.e. Black Swans
+Run both one after another.
