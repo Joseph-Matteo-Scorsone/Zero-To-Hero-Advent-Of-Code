@@ -1,0 +1,3 @@
+Implement a Neural Network from scratch.
+Use TanH as an activation function to predict positive or negative log returns.
+Plot testing data to predictions.
