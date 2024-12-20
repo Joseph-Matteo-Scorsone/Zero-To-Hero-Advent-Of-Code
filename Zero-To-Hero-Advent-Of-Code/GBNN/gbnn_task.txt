@@ -1,0 +1,3 @@
+Add a GradientBoostedNN class.
+Make predictions based on the residuals of other NN's.
+Plot actual vs prediction.
