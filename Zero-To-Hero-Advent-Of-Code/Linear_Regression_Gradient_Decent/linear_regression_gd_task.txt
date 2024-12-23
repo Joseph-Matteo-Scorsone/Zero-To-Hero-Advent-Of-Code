@@ -1,0 +1,2 @@
+Implement Linear Regression with Gradient Decent.
+Plot prediction to results.

@@ -1,0 +1,2 @@
+Implement a Gaussian Proccess Regression with the Kernel.
+Plot predicted vs actual.
